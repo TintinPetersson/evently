@@ -1,20 +1,49 @@
+import Collection from "@/components/shared/Collection";
 import { Button } from "@/components/ui/button";
+import { getAllEvents } from "@/lib/actions/event.actions";
+import { getUserById } from "@/lib/actions/user.actions";
+import { SignedIn, SignedOut, auth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const events = await getAllEvents({
+    query: "",
+    category: "",
+    page: 1,
+    limit: 6,
+  });
+
+  const { sessionClaims } = auth();
+  const userId = sessionClaims?.userId as string;
+
+  const user = await getUserById(userId);
+
+  console.log(user);
+
   return (
     <>
       <section className="bg-primary-50 bg-dotted-pattern bg-contain py-5 md:py-10">
         <div className="wrapper grid grid-cols-1 gap-5 md:grid-cols-2 2xl:gap-0">
           <div className="flex flex-col justify-center gap-8">
-            <h1 className="h1-bold">
-              Host, Connect, Celebrate: Your Events, Our Platorm!
-            </h1>
-            <p className="p-regular-20 md:p-regular-24">
-              Book and learn helpful tips from 3,168+ mentors in world-class
-              companies with our global community.
-            </p>
+            <SignedIn>
+              <h1 className="h1-bold">
+                Welcome back{" "}
+                <span className="text-primary-500">{user.firstName}!</span>
+              </h1>
+              <p className="p-regular-20 md:p-regular-24">
+                Go create or join an event to start planning your day.
+              </p>
+            </SignedIn>
+            <SignedOut>
+              <h1 className="h1-bold">
+                Host, Connect, Celebrate: Your Events, Our Platform!
+              </h1>
+              <p className="p-regular-20 md:p-regular-24">
+                Book and learn helpful tips from 3,168+ mentors in world-class
+                companies with our global community.
+              </p>
+            </SignedOut>
             <Button size="lg" asChild className="button w-full sm:w-fit">
               <Link href="#events">Explore Now</Link>
             </Button>
@@ -38,6 +67,15 @@ export default function Home() {
         <div className="flex w-full flex-col gap-5 md:flex-row">
           Search CategoryFilter
         </div>
+        <Collection
+          data={events?.data}
+          emptyTitle="No Events Found"
+          emptyStateSubtext="Come back later"
+          collectionType="All_Events"
+          limit={6}
+          page={1}
+          totalPages={2}
+        />
       </section>
     </>
   );
